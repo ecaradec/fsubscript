@@ -1,17 +1,17 @@
 // plugin script :
-displayname="Scripter";
+displayname="FARR SubScript";
 versionstring="1.0.0";
 releasedatestring="Jan 1st, 2008";
 author="Author";
 updateurl="";
 homepageurl="";
-shortdescription="Scripter";
-longdescription="Scripter";
-advconfigstring="Scripter";
-readmestring="Scripter";
-iconfilename="Scripter.ico";
+shortdescription="FSubScript";
+longdescription="FSubScript";
+advconfigstring="FSubScript";
+readmestring="FSubScript";
+iconfilename="FSubScript.ico";
 
-aliasstr="scripter";
+aliasstr="fsc";
 regexstr="";
 regexfilterstr="";
 keywordstr="";
@@ -63,7 +63,9 @@ function getTextFile(path) {
     return txt;
 }
 
+var g_currentDirectory;
 function onInit(directory) {
+    g_currentDirectory=directory;
     var f = fso.GetFolder(directory+"\\..");
     var fc = new Enumerator(f.SubFolders);
     var tmp="";
@@ -71,10 +73,10 @@ function onInit(directory) {
     {
         try {
             var currentDirectory=fc.item();
-            if(fso.FileExists(fc.item()+"\\"+aliasstr+".js"))
-                eval(getTextFile(fc.item()+"\\"+aliasstr+".js"))
+            if(fso.FileExists(fc.item()+"\\fsubscript.js"))
+                eval(getTextFile(fc.item()+"\\fsubscript.js"))
         } catch(e) {
-            error("error occured while loading "+fc.item().Name+"\\"+aliasstr+".js\n"+e);
+            error("error occured while loading "+fc.item().Name+"\\fsubscript.js\n"+e);
         }
     }    
 }
@@ -128,6 +130,11 @@ function onReceiveKey(key, altpressed, controlpressed, shiftpressed) {
     }
 }
 function ononDoAdvConfig() {
+    var str="";
+    for(var i in plugins) {
+        str+=(i+" ");
+    }
+    FARR.exec(g_currentDirectory+"\\fsubscript-settings.exe", str);
 }
 function onDoShowReadMe() {
 }
