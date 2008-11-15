@@ -1,5 +1,5 @@
 // plugin script :
-displayname="FARR SubScript";
+displayname="FARRSubScript";
 versionstring="1.0.0";
 releasedatestring="Jan 1st, 2008";
 author="Author";
@@ -11,7 +11,7 @@ advconfigstring="FSubScript";
 readmestring="FSubScript";
 iconfilename="FSubScript.ico";
 
-aliasstr="fsc";
+aliasstr="fssc";
 regexstr="";
 regexfilterstr="";
 keywordstr="";
@@ -55,6 +55,21 @@ function error(txt) {
 }
 
 plugins={}
+/*plugins["settings"]={
+    search:function(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
+        if(!explicit) return;
+       
+        FARR.emitResult(querykey,"Settings","Settings", this.icon,CLIP,MATCH_AGAINST_SEARCH,10000,"fssc/settings");
+    },
+    trigger:function(path, title, groupname, pluginid, thispluginid, score, entrytype, args) {
+        if(groupname!="fssc/settings") return;
+
+        FARR.exec(g_currentDirectory+"\\FSSCSettings.ahk", str, "");
+        //onDoAdvConfig();
+        return HANDLED;
+    }
+}*/
+
 var fso=new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
     var f=fso.OpenTextFile(path);
@@ -83,7 +98,6 @@ function onInit(directory) {
 // mjet : multiple javascript extension for farr
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
     FARR.setState(querykey,SEARCHING);
-    displayAlertMessage(FARR.getQueryString());    
     var exactMatch=false;
 
     for(var i in plugins) {
@@ -98,20 +112,18 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, t
         var m=queryraw.match(new RegExp("^"+aliasstr+" ?(.*)"));
         for(var i in plugins) {
             if(i.indexOf(m[1])!=-1)
-                FARR.emitResult(querykey,i, aliasstr+" +"+i, plugins[i].icon || iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000, aliasstr+" +"+i);
+                FARR.emitResult(querykey,i, plugins[i].autocomplete || (aliasstr+" +"+i), plugins[i].icon || iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000, plugins[i].autocomplete || (aliasstr+" +"+i));
         }
     }
     if(queryraw=="aplugins") {
         for(var i in plugins) {
-            FARR.emitResult(querykey,(plugins[i].displayName || i) + " ("+plugins[i].version+" - "+plugins[i].lastChange+")", aliasstr+" +"+i, plugins[i].icon || iconfilename, ALIAS, MATCH_AGAINST_SEARCH,99, aliasstr+" +"+i);
+            FARR.emitResult(querykey,(plugins[i].displayName || i) + " ("+plugins[i].version+" - "+plugins[i].lastChange+")", plugins[i].autocomplete || (aliasstr+" +"+i), plugins[i].icon || iconfilename, ALIAS, MATCH_AGAINST_SEARCH,99, plugins[i].autocomplete || (aliasstr+" +"+i));
         }
     }
 	FARR.setState(querykey,STOPPED);
 }
 
 function onProcessTrigger(path, title, groupname, pluginid, thispluginid, score, entrytype, args) {
-
-    return HANDLED;
     for(var i in plugins) {
         try {
             var r=plugins[i].trigger(path, title, groupname, pluginid, thispluginid, score, entrytype, args);
@@ -129,12 +141,36 @@ function onReceiveKey(key, altpressed, controlpressed, shiftpressed) {
         } catch(e) { error("plugin "+i+" has failed on received key : "+e) }
     }
 }
-function ononDoAdvConfig() {
+function onWin32Message(wparam,lparam) {
+    var SHOW_SUBPLUGIN_CONFIG=0;
+    var RELOAD_SUBPLUGINCONFIG=1;
+    if(wparam==SHOW_SUBPLUGIN_CONFIG) {
+        FARR.debug(""+lparam);
+        var index=0;
+        for(var i in plugins) {
+            if(index==lparam-1)
+                break;
+            index++;
+        }
+        plugins[i].showSettings();
+    } else if(wparam==RELOAD_SUBPLUGINCONFIG) {
+        var index=0;
+        for(var i in plugins) {
+            if(index==lparam-1)
+                break;
+            index++;
+        }
+        plugins[i].settingsChanged();
+    }
+}
+function onDoAdvConfig() {
     var str="";
     for(var i in plugins) {
         str+=(i+" ");
     }
-    FARR.exec(g_currentDirectory+"\\fsubscript-settings.exe", str);
+    FARR.exec(g_currentDirectory+"\\FSSCSettings.exe", str, g_currentDirectory);
+    //FARR.exec(g_currentDirectory+"\\FSSCSettings.ahk", str, g_currentDirectory);
+    return true;
 }
 function onDoShowReadMe() {
 }
