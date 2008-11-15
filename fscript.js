@@ -81,7 +81,7 @@ function onInit(directory) {
 // mjet : multiple javascript extension for farr
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
     FARR.setState(querykey,SEARCHING);
-
+    displayAlertMessage(FARR.getQueryString());    
     var exactMatch=false;
 
     for(var i in plugins) {
@@ -108,6 +108,8 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, t
 }
 
 function onProcessTrigger(path, title, groupname, pluginid, thispluginid, score, entrytype, args) {
+
+    return HANDLED;
     for(var i in plugins) {
         try {
             var r=plugins[i].trigger(path, title, groupname, pluginid, thispluginid, score, entrytype, args);
