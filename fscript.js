@@ -26,9 +26,9 @@ STOPPED=0; SEARCHING=1;
 
 HANDLED=1; CLOSE=2;
 
-function setStatusBar() { }
-function setSearch() { }
-function setSearchNoGo() { }
+function setStatusBar(txt) { }
+function setSearch(txt) { FARR.setStrValue("setsearch",txt); }
+function setSearchNoGo() { FARR.setStrValue("setsearchnogo",txt); }
 function stopSearch() { }
 function hideWindow() { }
 function showWindow() { }
@@ -46,6 +46,10 @@ function displayAlertMessageNoTimeout() { }
 function displayBalloonMessage() { }
 function execWebbrowserEmbededJavascript() { }
 
+function restartSearch(txt) { FARR.setStrValue("launch","restartsearch "+txt); }
+function doSearch(txt) { FARR.setStrValue("launch","dosearch "+txt); }
+function doSearchOnTrigger(txt) { FARR.setStrValue("launch","dosearchontrigger "+txt); }
+
 function error(txt) {
     displayAlertMessage(txt);
 }
@@ -53,7 +57,10 @@ function error(txt) {
 plugins={}
 var fso=new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
-    return fso.OpenTextFile(path).ReadAll();
+    var f=fso.OpenTextFile(path);
+    var txt=f.ReadAll();
+    f.Close();
+    return txt;
 }
 
 function onInit(directory) {
@@ -62,33 +69,39 @@ function onInit(directory) {
     var tmp="";
     for (; !fc.atEnd(); fc.moveNext())
     {
-        try {            
-            if(fso.FileExists(fc.item()+"\\scripter.js"))
-                eval(getTextFile(fc.item()+"\\scripter.js"))
+        try {
+            var currentDirectory=fc.item();
+            if(fso.FileExists(fc.item()+"\\"+aliasstr+".js"))
+                eval(getTextFile(fc.item()+"\\"+aliasstr+".js"))
         } catch(e) {
-            error("error occured while loading "+fc.item().Name+"\\scripter.js\n"+e);
+            error("error occured while loading "+fc.item().Name+"\\"+aliasstr+".js\n"+e);
         }
     }    
 }
-
+// mjet : multiple javascript extension for farr
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
-	//error("search");
     FARR.setState(querykey,SEARCHING);
+
     var exactMatch=false;
 
     for(var i in plugins) {
         try {
-            var isExplicit=queryraw.indexOf("scripter +"+i)==0;
+            var isExplicit=queryraw.indexOf(aliasstr+" +"+i)==0;
             if(isExplicit) exactMatch=true;
             plugins[i].search(querykey, isExplicit, queryraw, modifier, triggermethod);
         } catch(e) { error("plugin "+i+" has failed on search : "+e); }
         //FARR.emitResult(querykey,i, "scripter "+i, iconfilename,UNKNOWN,IMMEDIATE_DISPLAY,1000);
     }
-    if(!exactMatch && queryraw.indexOf("scripter")==0) {
-        var m=queryraw.match(/^scripter ?(.*)/);
+    if(!exactMatch && queryraw.indexOf(aliasstr)==0) {
+        var m=queryraw.match(new RegExp("^"+aliasstr+" ?(.*)"));
         for(var i in plugins) {
             if(i.indexOf(m[1])!=-1)
-                FARR.emitResult(querykey,i, "scripter +"+i, iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000);
+                FARR.emitResult(querykey,i, aliasstr+" +"+i, iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000, aliasstr+" +"+i);
+        }
+    }
+    if(queryraw=="aplugins") {
+        for(var i in plugins) {
+            FARR.emitResult(querykey,(plugins[i].displayName || i) + " ("+plugins[i].version+" - "+plugins[i].lastChange+")", aliasstr+" +"+i, plugins[i].icon, ALIAS, MATCH_AGAINST_SEARCH,99, aliasstr+" +"+i);
         }
     }
 	FARR.setState(querykey,STOPPED);
