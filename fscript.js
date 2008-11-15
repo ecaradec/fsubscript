@@ -96,12 +96,12 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, t
         var m=queryraw.match(new RegExp("^"+aliasstr+" ?(.*)"));
         for(var i in plugins) {
             if(i.indexOf(m[1])!=-1)
-                FARR.emitResult(querykey,i, aliasstr+" +"+i, iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000, aliasstr+" +"+i);
+                FARR.emitResult(querykey,i, aliasstr+" +"+i, plugins[i].icon || iconfilename,ALIAS,MATCH_AGAINST_SEARCH,10000, aliasstr+" +"+i);
         }
     }
     if(queryraw=="aplugins") {
         for(var i in plugins) {
-            FARR.emitResult(querykey,(plugins[i].displayName || i) + " ("+plugins[i].version+" - "+plugins[i].lastChange+")", aliasstr+" +"+i, plugins[i].icon, ALIAS, MATCH_AGAINST_SEARCH,99, aliasstr+" +"+i);
+            FARR.emitResult(querykey,(plugins[i].displayName || i) + " ("+plugins[i].version+" - "+plugins[i].lastChange+")", aliasstr+" +"+i, plugins[i].icon || iconfilename, ALIAS, MATCH_AGAINST_SEARCH,99, aliasstr+" +"+i);
         }
     }
 	FARR.setState(querykey,STOPPED);
