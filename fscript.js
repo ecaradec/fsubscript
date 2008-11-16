@@ -1,6 +1,6 @@
 // plugin script :
 displayname="FARRSubScript";
-versionstring="1.0.0";
+versionstring="0.9.0";
 releasedatestring="Jan 1st, 2008";
 author="Author";
 updateurl="";
@@ -55,20 +55,6 @@ function error(txt) {
 }
 
 plugins={}
-/*plugins["settings"]={
-    search:function(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
-        if(!explicit) return;
-       
-        FARR.emitResult(querykey,"Settings","Settings", this.icon,CLIP,MATCH_AGAINST_SEARCH,10000,"fssc/settings");
-    },
-    trigger:function(path, title, groupname, pluginid, thispluginid, score, entrytype, args) {
-        if(groupname!="fssc/settings") return;
-
-        FARR.exec(g_currentDirectory+"\\FSSCSettings.ahk", str, "");
-        //onDoAdvConfig();
-        return HANDLED;
-    }
-}*/
 
 var fso=new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
@@ -93,7 +79,7 @@ function onInit(directory) {
         } catch(e) {
             error("error occured while loading "+fc.item().Name+"\\fsubscript.js\n"+e);
         }
-    }    
+    }
 }
 // mjet : multiple javascript extension for farr
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, modifier, triggermethod) {
@@ -163,13 +149,21 @@ function onWin32Message(wparam,lparam) {
         plugins[i].settingsChanged();
     }
 }
-function onDoAdvConfig() {
-    var str="";
-    for(var i in plugins) {
-        str+=(i+" ");
+function onDoAdvConfig() {  
+    try {
+        fso.DeleteFile(g_currentDirectory+"\\FSSCSettings.ini");
+    } catch(e) {
     }
-    FARR.exec(g_currentDirectory+"\\FSSCSettings.exe", str, g_currentDirectory);
-    //FARR.exec(g_currentDirectory+"\\FSSCSettings.ahk", str, g_currentDirectory);
+   
+    // extract plugins data for the settings
+    var index=1;
+    for(var i in plugins) {
+        FARR.setIniValue(g_currentDirectory+"\\FSSCSettings.ini", index,"PluginName",i);
+        FARR.setIniValue(g_currentDirectory+"\\FSSCSettings.ini", index,"Icon",plugins[i].icon);
+        index++;
+    }
+
+    FARR.exec(g_currentDirectory+"\\FSSCSettings.exe", "", g_currentDirectory);
     return true;
 }
 function onDoShowReadMe() {
@@ -177,6 +171,4 @@ function onDoShowReadMe() {
 function onSetStrValue(name, value) {
 }
 function onGetStrValue(name) {
-}
-function onOptionsChanged() {
 }

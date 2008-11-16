@@ -1,17 +1,24 @@
 #NoTrayIcon
 #NoEnv
 #SingleInstance force
-
+Menu, Tray, Icon, FSubScript.ico
 Gui, Add, ListView, r10 gMyListView, Name
 ImageListID := IL_Create(100) 
 LV_SetImageList(ImageListID)
 
-Loop, %0%  ; For each parameter:
+index=0
+Loop
 {
-    param := %A_Index%  ; Fetch the contents of the variable whose name is contained in A_Index.
-    MyVar = % "..\" . param . "\" . param . ".ico"
-    IL_Add(ImageListID, MyVar)
-    LV_Add("Icon" A_Index, param)
+    index:=index+1
+    IniRead, pluginName, FSSCSettings.ini, %index%, PluginName
+    if pluginName=ERROR
+    {
+    break
+    }
+    IniRead, icon, FSSCSettings.ini, %index%, Icon, FSubScript.ico
+
+    IL_Add(ImageListID, icon)
+    LV_Add("Icon" index, pluginName)
 }
 
 Gui, Add, Button, gClose, Close
