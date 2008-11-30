@@ -1,7 +1,7 @@
-// plugin script :
+// FARRSubScript-specific variables 
 displayname="FARRSubScript";
-versionstring="0.9.2"; // XXX: locally customized
-releasedatestring="Nov 19th, 2008";
+versionstring="0.9.3"; // XXX: locally customized
+releasedatestring="Nov 20th, 2008";
 author="Author";
 updateurl="";
 homepageurl="";
@@ -10,13 +10,12 @@ longdescription="FSubScript";
 advconfigstring="FSubScript";
 readmestring="FSubScript";
 iconfilename="FSubScript.ico";
-
 aliasstr="fssc";
 regexstr="";
 regexfilterstr="";
 keywordstr="";
 scorestr="300";
-
+// FARR constants
 // type
 UNKNOWN=0; FILE=1; FOLDER=2; ALIAS=3; URL=4; PLUGIN=5; CLIP=5;
 // Postprocessing XXX: rename ADDSCORE -> ADD_SCORE ok?
@@ -24,9 +23,9 @@ IMMEDIATE_DISPLAY=0; ADD_SCORE=1; MATCH_AGAINST_SEARCH=2; ADD_SCORE_W_PATS=3;
 MATCH_AGAINST_SEARCH_W_PATS=4;
 // search state
 STOPPED=0; SEARCHING=1;
-
+//
 HANDLED=1; CLOSE=2;
-
+// FARR.setStrValue() wrappers
 function setStatusBar(txt) { FARR.setStrValue("statusbar", txt); }
 function setSearch(txt) { FARR.setStrValue("setsearch", txt); }
 function setSearchNoGo() { FARR.setStrValue("setsearchnogo", txt); }
@@ -46,7 +45,7 @@ function displayAlertMessage(txt) { FARR.setStrValue("DisplayAlertMessage", txt)
 function displayAlertMessageNoTimeout(txt) { FARR.setStrValue("DisplayAlertMessageNoTimeout", txt); }
 function displayBalloonMessage(txt) { FARR.setStrValue("DisplayBalloonMessage", txt); }
 function execWebbrowserEmbededJavascript(txt) { FARR.setStrValue("EmbeddedWb.ExecJavascript", txt); }
-
+// launch-specific wrappers
 function paste(txt) { FARR.setStrValue("launch", "paste " + txt); }
 function copyClip(txt) { FARR.setStrValue("launch", "copyclip " + txt); }
 function restartSearch(txt) { FARR.setStrValue("launch", "restartsearch " + txt); }
@@ -76,13 +75,11 @@ function showPleaseWait(txt) { FARR.setStrValue("launch", "showpleasewait " + tx
 function hidePleaseWait() { FARR.setStrValue("launch", "hidepleasewait"); }
 //function alert(txt) { FARR.setStrValue("launch", "alert " + txt); }
 function sleep(ms) { FARR.setStrValue("launch", "sleep " + ms); }
-
+// 
 function error(txt) {
   displayAlertMessage(txt);
 }
-
 var plugins = {}
-
 var fso = new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
   var f = fso.OpenTextFile(path);
@@ -90,7 +87,6 @@ function getTextFile(path) {
   f.Close();
   return txt;
 }
-
 var g_currentDirectory;
 function onInit(directory) {
   g_currentDirectory = directory;
@@ -110,7 +106,6 @@ function onInit(directory) {
     }
   }
 }
-// 
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, 
                        modifier, triggermethod) {
   FARR.setState(querykey, SEARCHING);
@@ -129,6 +124,16 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
   // execute search() for each plugin unless...see below
   for (var i in plugins) {
     try {
+      if (plugins[i].regexobj) {
+        var m_array = queryraw.match(plugins[i].regexobj);
+        if (m_array) {
+          var m_arg = m_array[1];
+          if (m_arg) {
+            // XXX: eventually write wrapper function in fscript.js
+            FARR.setStrValue("filteron", m_arg);
+          }
+        }
+      }
       var isExact = queryraw.indexOf(plugins[i].aliasstr) == 0;
       plugins[i].search(querykey, isExact, queryraw, querynokeyword, 
                         modifier, triggermethod);
@@ -145,9 +150,8 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
   }
   FARR.setState(querykey, STOPPED);
 }
-//
-function onProcessTrigger(path, title, groupname, pluginid, thispluginid, 
-                          score, entrytype, args) {
+function onProcessTrigger(path, title, groupname, pluginid, thispluginid,
+                          score, entrytype, args) { 
   for (var i in plugins) {
     try {
       var r = plugins[i].trigger(path, title, groupname, pluginid, thispluginid, 
@@ -160,7 +164,6 @@ function onProcessTrigger(path, title, groupname, pluginid, thispluginid,
       }
   }
 }
-//
 function onReceiveKey(key, altpressed, controlpressed, shiftpressed) {
   for (var i in plugins) {
     try {
@@ -173,7 +176,6 @@ function onReceiveKey(key, altpressed, controlpressed, shiftpressed) {
     }
   }
 }
-
 function onWin32Message(wparam, lparam) {
   var SHOW_SUBPLUGIN_CONFIG = 0;
   var RELOAD_SUBPLUGINCONFIG = 1;
@@ -194,8 +196,7 @@ function onWin32Message(wparam, lparam) {
     plugins[i].settingsChanged();
   }
 }
-
-function onDoAdvConfig() {  
+function onDoAdvConfig() {
   try {
     fso.DeleteFile(g_currentDirectory + "\\FSSCSettings.ini");
   } catch(e) {
@@ -212,12 +213,9 @@ function onDoAdvConfig() {
   FARR.exec(g_currentDirectory + "\\FSSCSettings.exe", "", g_currentDirectory);
   return true;
 }
-
 function onDoShowReadMe() {
 }
-
 function onSetStrValue(name, value) {
 }
-
 function onGetStrValue(name) {
 }
