@@ -1,7 +1,7 @@
 // FARRSubScript-specific variables 
 displayname="FARRSubScript";
 versionstring="0.9.7"; // XXX: locally customized
-releasedatestring="Nov 23rd, 2008";
+releasedatestring="Nov 25th, 2008";
 author="Author";
 updateurl="";
 homepageurl="";
@@ -49,7 +49,7 @@ function reportError(txt) { FARR.setStrValue("reporterror", txt); }
 function setCliboard() { FARR.setStrValue("clipboard"); }
 function pasteClipboardToLastActiveWindow(txt) { 
   FARR.setStrValue("PasteClipboardToLastActiveWindow", txt) 
-}
+    }
 function displayAlertMessage(txt) { 
   FARR.setStrValue("DisplayAlertMessage", txt); 
 }
@@ -78,7 +78,7 @@ function showFile(filename) {
   FARR.setStrValue("launch", "showfile " + filename); 
 }
 function showFileRTF(filename) { 
-FARR.setStrValue("launch", "showfilertf " + filename); 
+  FARR.setStrValue("launch", "showfilertf " + filename); 
 }
 function showFileHTML(filename) { 
   FARR.setStrValue("launch", "showfilehtml " + filename); 
@@ -115,7 +115,7 @@ function error(txt) {
   displayAlertMessage(txt);
 }
 var plugins = {}
-var fso = new ActiveXObject("Scripting.FileSystemObject");
+  var fso = new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
   var f = fso.OpenTextFile(path);
   var txt = f.ReadAll();
@@ -136,11 +136,11 @@ function onInit(directory) {
         fln = currentDirectory + "\\fsubscript.js";
         if (fso.FileExists(fln)) {
           eval(getTextFile(fln));
-	}
+        }
       } catch (e) {
-	error("error occured while loading " + 
-	      currentDirectory + "\\fsubscript.js\n" + 
-	      "message: " + e.message + " " + "name: " + e.name);
+        error("error occured while loading " + 
+              currentDirectory + "\\fsubscript.js\n" + 
+              "message: " + e.message + " " + "name: " + e.name);
       }
       if (depth < maxdepth) {
         processFolder(currentDirectory, depth + 1);
@@ -158,7 +158,7 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
     FARR.setState(querykey, STOPPED); 
   }
   FARR.setState(querykey, SEARCHING);
-  // (q)uery (m)atch (a)rray
+  // qma: (q)uery (m)atch (a)rray
   var qma = queryraw.match("^([^ ]+) ?(.*)"); // XXX: simplify?
   var first, rest;
   if (qma) { 
@@ -166,66 +166,68 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
     rest = qma[2];
     if (first === "aplugins") {
       for (var i in plugins) {
-        var title = (plugins[i].displayName || i) + " (" + 
-                    plugins[i].version + " - " + 
-                    plugins[i].lastChange + ")";
-        FARR.emitResult(querykey, title, plugins[i].aliasstr, 
-                        plugins[i].icon || iconfilename, ALIAS, 
-                        MATCH_AGAINST_SEARCH, 99, plugins[i].aliasstr);
+	var pi = plugins[i];
+        var title = (pi.displayName || i) + 
+	            " (" + pi.version + " - " + pi.lastChange + ")";
+        FARR.emitResult(querykey, title, pi.aliasstr, pi.icon || iconfilename, 
+			ALIAS, MATCH_AGAINST_SEARCH, 99, pi.aliasstr);
       }
       cleanup(); return;
     }
   }
   /*
-     2008-11-23 mouser (paraphrased):
-     1) if regex plugin
-          check regex, if matches
-            set exact flag=true and set filter=regexfilter
-     2) if not regex plugin, 
-          check first word, if matches
-            set exact flag=true and set filter=rest of string
-     3) call setfilter if filter!=""
-     4) call search
-     5) call stopsearch if exact=true
-     XXX: not following the above exactly
+    2008-11-23 mouser (paraphrased):
+    1) if regex plugin
+    check regex, if matches
+    set exact flag=true and set filter=regexfilter
+    2) if not regex plugin, 
+    check first word, if matches
+    set exact flag=true and set filter=rest of string
+    3) call setfilter if filter!=""
+    4) call search
+    5) call stopsearch if exact=true
+    XXX: not following the above exactly
   */
-  // (m)atched (p)lugin (a)lias?
-  // (p)lugin (r)egex (s)tring
-  // (p)lugin (q)uery (m)atch (a)rray
-  // (p)lugin (r)egex (s)earch (f)liter XXX:
-  // (p)lugin (r)egex (f)ilter (g)roup
-  var filterstr, mpa, prs, pqma, prfg;
+  // mpa: (m)atched (p)lugin (a)lias?
+  // prs: (p)lugin (r)egex (s)tring
+  // pqma: (p)lugin (q)uery (m)atch (a)rray
+  // prsf: (p)lugin (r)egex (s)earch (f)liter XXX:
+  // prfg: (p)lugin (r)egex (f)ilter (g)roup
+  // pi: (p)lugin (i)
+  var filterstr, mpa, prs, pqma, prfg, pi;
   for (var i in plugins) {
     filterstr = null;
+    pi = plugins[i];
     try {
-      //mpa = queryraw.indexOf(plugins[i].aliasstr) == 0; // XXX
+      //mpa = queryraw.indexOf(pi.aliasstr) == 0; // XXX
       mpa = false;
       if (first) {
-        // plugins[i].aliasstr may be undefined or empty string
-	mpa = (plugins[i].aliasstr === first);
+        // pi.aliasstr may be undefined or empty string
+        mpa = (pi.aliasstr === first);
       }
-      prs = plugins[i].regexstr; 
+      prs = pi.regexstr; 
       if (prs) { // 1) regex plugin
-	pqma = queryraw.match(prs); 
-	if (pqma) {
-	  //prsf = plugins[i].regexsearchfilter; 
+        pqma = queryraw.match(prs); 
+        if (pqma) {
+          //prsf = pi.regexsearchfilter; 
           // approximate initially by using regexfiltergroup
-	  prfg = plugins[i].regexfiltergroup; 
+          prfg = pi.regexfiltergroup; 
           if (prfg && pqma[prfg]) { 
-	    filterstr = pqma[prfg];
-	  }
-	}
+            filterstr = pqma[prfg];
+          }
+        }
       } else { // 2) non-regex plugin
-	if (mpa && rest) { // XXX
+        if (mpa && rest) { // XXX
           filterstr = rest;
-	}
+        }
       }
       if (filterstr) { // 3) filter
-	forceResultFilter(filterstr); 
+        forceResultFilter(filterstr); 
       }
       // 4) search
-      plugins[i].search(querykey, mpa, queryraw, querynokeyword, 
-                        modifier, triggermethod);
+      if (!pi.search) { continue; }
+      pi.search(querykey, mpa, queryraw, querynokeyword, modifier, 
+                triggermethod);
       if (mpa) { // 5) stop
         stopSearch();
         break;
@@ -239,23 +241,28 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
 }
 function onProcessTrigger(path, title, groupname, pluginid, thispluginid,
                           score, entrytype, args) { 
+  var pi, r;
   for (var i in plugins) {
     try {
-      var r = plugins[i].trigger(path, title, groupname, pluginid, 
-                                 thispluginid, score, entrytype, args);
+      pi = plugins[i];
+      if (!pi.trigger) { continue; }
+      r = pi.trigger(path, title, groupname, pluginid, thispluginid, score, 
+		     entrytype, args);
       if ((r & 3) != 0) // XXX: may be we can use 'constants' for readability?
         return r; // stop if stop or closed is required
-      } catch(e) { 
-        error("plugin " + i + " has failed on trigger : " + 
-              "message: " + e.message + " " + "name: " + e.name);
-      }
+    } catch(e) { 
+      error("plugin " + i + " has failed on trigger : " + 
+            "message: " + e.message + " " + "name: " + e.name);
+    }
   }
 }
 function onReceiveKey(key, altpressed, controlpressed, shiftpressed) {
+  var pi, r;
   for (var i in plugins) {
     try {
-      var r = plugins[i].receivekey(key, 
-                                    altpressed, controlpressed, shiftpressed);
+      pi = plugins[i];
+      if (!pi.receive) { continue; }
+      r = pi.receive(key, altpressed, controlpressed, shiftpressed);
       if (r) { return true; }
     } catch(e) { 
       error("plugin " + i + " has failed on received key : " + 
@@ -273,14 +280,14 @@ function onWin32Message(wparam, lparam) {
       if (index == lparam - 1) break;
       index++;
     }
-    plugins[i].showSettings();
+    plugins[i].showSettings(); // XXX: i -> index?
   } else if (wparam == RELOAD_SUBPLUGINCONFIG) {
     var index = 0;
     for (var i in plugins) {
       if (index == lparam - 1) break;
       index++;
     }
-    plugins[i].settingsChanged();
+    plugins[i].settingsChanged(); // XXX: i -> index?
   }
 }
 function onDoAdvConfig() {
@@ -307,3 +314,7 @@ function onSetStrValue(name, value) {
 }
 function onGetStrValue(name) {
 }
+
+// Local Variables:
+// c-basic-offset: 2
+// End:
