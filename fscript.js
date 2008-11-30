@@ -1,6 +1,6 @@
 // FARRSubScript-specific variables 
 displayname="FARRSubScript";
-versionstring="0.9.6"; // XXX: locally customized
+versionstring="0.9.7"; // XXX: locally customized
 releasedatestring="Nov 23rd, 2008";
 author="Author";
 updateurl="";
@@ -125,22 +125,29 @@ function getTextFile(path) {
 var g_currentDirectory;
 function onInit(directory) {
   g_currentDirectory = directory;
-  var f = fso.GetFolder(directory + "\\..");
-  var fc = new Enumerator(f.SubFolders);
-  var tmp = "";
-  for (; !fc.atEnd(); fc.moveNext())
-  {
-    try {
-      var currentDirectory = fc.item();
-      if (fso.FileExists(fc.item() + "\\fsubscript.js")) {
-        eval(getTextFile(fc.item() + "\\fsubscript.js"));
+  var maxdepth = 2;
+  function processFolder(foldername, depth) {
+    var fld = fso.GetFolder(foldername);
+    var fldc = new Enumerator(fld.SubFolders);
+    var fln;
+    for (; !fldc.atEnd(); fldc.moveNext()) {
+      try {
+        var currentDirectory = fldc.item(); // used for eval(), full path
+        fln = currentDirectory + "\\fsubscript.js";
+        if (fso.FileExists(fln)) {
+          eval(getTextFile(fln));
+	}
+      } catch (e) {
+	error("error occured while loading " + 
+	      currentDirectory + "\\fsubscript.js\n" + 
+	      "message: " + e.message + " " + "name: " + e.name);
       }
-    } catch(e) {
-      error("error occured while loading " + 
-            fc.item().Name + "\\fsubscript.js\n" + 
-            "message: " + e.message + " " + "name: " + e.name);
-    }
+      if (depth < maxdepth) {
+        processFolder(currentDirectory, depth + 1);
+      }
+    }    
   }
+  processFolder(directory + "\\..", 0);
 }
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, 
                        modifier, triggermethod) {
