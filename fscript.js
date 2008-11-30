@@ -1,7 +1,7 @@
 // plugin script :
 displayname="FARRSubScript";
-versionstring="0.9.1";
-releasedatestring="Nov 18th, 2008";
+versionstring="0.9.2"; // XXX: locally customized
+releasedatestring="Nov 19th, 2008";
 author="Author";
 updateurl="";
 homepageurl="";
@@ -19,8 +19,9 @@ scorestr="300";
 
 // type
 UNKNOWN=0; FILE=1; FOLDER=2; ALIAS=3; URL=4; PLUGIN=5; CLIP=5;
-// Postprocessing
-IMMEDIATE_DISPLAY=0; ADDSCORE=1; MATCH_AGAINST_SEARCH=2;
+// Postprocessing XXX: rename ADDSCORE -> ADD_SCORE ok?
+IMMEDIATE_DISPLAY=0; ADD_SCORE=1; MATCH_AGAINST_SEARCH=2; ADD_SCORE_W_PATS=3;
+MATCH_AGAINST_SEARCH_W_PATS=4;
 // search state
 STOPPED=0; SEARCHING=1;
 
@@ -125,12 +126,18 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
     FARR.setState(querykey, STOPPED);
     return;
   }
-  // execute search() for each plugin
+  // execute search() for each plugin unless...see below
   for (var i in plugins) {
     try {
-      var isExplicit = queryraw.indexOf(plugins[i].aliasstr) == 0;
-      plugins[i].search(querykey, isExplicit, queryraw, querynokeyword, 
+      var isExact = queryraw.indexOf(plugins[i].aliasstr) == 0;
+      plugins[i].search(querykey, isExact, queryraw, querynokeyword, 
                         modifier, triggermethod);
+      // as per discussion w/ mouser on 2008-11-19: 
+      //   'search should only STOP on the EXACT match'
+      if (isExact) {
+        stopSearch();
+        break;
+      }
     } catch(e) { 
       error("plugin " + i + " has failed on search : " + 
             "message: " + e.message + " " + "name: " + e.name);
