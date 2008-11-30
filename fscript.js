@@ -1,7 +1,7 @@
 // FARRSubScript-specific variables 
 displayname="FARRSubScript";
-versionstring="0.9.5"; // XXX: locally customized
-releasedatestring="Nov 22nd, 2008";
+versionstring="0.9.6"; // XXX: locally customized
+releasedatestring="Nov 23rd, 2008";
 author="Author";
 updateurl="";
 homepageurl="";
@@ -17,7 +17,7 @@ keywordstr="";
 scorestr="300";
 // FARR constants
 // type
-UNKNOWN=0; FILE=1; FOLDER=2; ALIAS=3; URL=4; PLUGIN=5; CLIP=5;
+UNKNOWN=0; FILE=1; FOLDER=2; ALIAS=3; URL=4; PLUGIN=5; CLIP=6; ALIASFILE=7;
 // Postprocessing XXX: rename ADDSCORE -> ADD_SCORE ok?
 IMMEDIATE_DISPLAY=0; ADD_SCORE=1; MATCH_AGAINST_SEARCH=2; ADD_SCORE_W_PATS=3;
 MATCH_AGAINST_SEARCH_W_PATS=4;
@@ -152,57 +152,74 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
   }
   FARR.setState(querykey, SEARCHING);
   // (q)uery (m)atch (a)rray
-  var qma = queryraw.match("([^ ]+) ?(.*)");
-  if (!qma) { cleanup("unexpected non-match of query"); return; }
-  var first = qma[1];
-  if (!first) { cleanup("unexpected false match result"); return; } 
-  var rest = qma[2];
-  if (first == "aplugins") {
-    for (var i in plugins) {
-      var title = (plugins[i].displayName || i) + " (" + 
-                  plugins[i].version + " - " + 
-                  plugins[i].lastChange + ")";
-      FARR.emitResult(querykey, title, plugins[i].aliasstr, 
-                      plugins[i].icon || iconfilename, ALIAS, 
-                      MATCH_AGAINST_SEARCH, 99, plugins[i].aliasstr);
+  var qma = queryraw.match("^([^ ]+) ?(.*)"); // XXX: simplify?
+  var first, rest;
+  if (qma) { 
+    first = qma[1];
+    rest = qma[2];
+    if (first === "aplugins") {
+      for (var i in plugins) {
+        var title = (plugins[i].displayName || i) + " (" + 
+                    plugins[i].version + " - " + 
+                    plugins[i].lastChange + ")";
+        FARR.emitResult(querykey, title, plugins[i].aliasstr, 
+                        plugins[i].icon || iconfilename, ALIAS, 
+                        MATCH_AGAINST_SEARCH, 99, plugins[i].aliasstr);
+      }
+      cleanup(); return;
     }
-    cleanup(); return;
   }
-  // execute search() for each plugin unless...see below
+  /*
+     2008-11-23 mouser (paraphrased):
+     1) if regex plugin
+          check regex, if matches
+            set exact flag=true and set filter=regexfilter
+     2) if not regex plugin, 
+          check first word, if matches
+            set exact flag=true and set filter=rest of string
+     3) call setfilter if filter!=""
+     4) call search
+     5) call stopsearch if exact=true
+     XXX: not following the above exactly
+  */
+  // (m)atched (p)lugin (a)lias?
+  // (p)lugin (r)egex (s)tring
+  // (p)lugin (q)uery (m)atch (a)rray
+  // (p)lugin (r)egex (s)earch (f)liter XXX:
+  // (p)lugin (r)egex (f)ilter (g)roup
+  var filterstr, mpa, prs, pqma, prfg;
   for (var i in plugins) {
+    filterstr = null;
     try {
-      // (p)lugin (a)lias (m)atched?
-      //var pam = queryraw.indexOf(plugins[i].aliasstr) == 0; // XXX
-      var pam = (plugins[i].aliasstr == first);
-      plugins[i].search(querykey, pam, queryraw, querynokeyword, 
-                        modifier, triggermethod);
-      if (pam) {
-        if (!(plugins[i].regexstr)) {
-          // if script is NOT a regex script but triggered because first word 
-          // of search = pattern word of script THEN set filter to everything 
-          // after first word
-	  forceResultFilter(rest);
-        } else {
-          // if script is REGEX script default action should be NOT to filter 
-          // -- except if there is a regexsearchfilter property for script 
-	  // (p)lugin (r)egex (s)earch (f)ilter
-	  //var prsf = plugins[i].regexsearchfilter;
-          // -- approximating initially by using regexfiltergroup 
-	  // (p)lugin (r)egex (f)ilter (g)roup
-	  var prfg = plugins[i].regexfiltergroup;
-          if (prfg) {
-            // (p)lugin (q)uery (m)atch (a)rray
-            var pqma = queryraw.match(plugins[i].regexstr);
-            if (!pqma) { 
-              cleanup("unexpected plugin regex match failure"); return; 
-            } 
-            if (!pqma[prfg]) { 
-              cleanup("unexpected false plugin match result"); return; 
-            } 
-            forceResultFilter(pqma[prfg]);
-          }
+      //mpa = queryraw.indexOf(plugins[i].aliasstr) == 0; // XXX
+      mpa = false;
+      if (first) {
+        // plugins[i].aliasstr may be undefined or empty string
+	mpa = (plugins[i].aliasstr === first);
+      }
+      prs = plugins[i].regexstr; 
+      if (prs) { // 1) regex plugin
+	pqma = queryraw.match(prs); 
+	if (pqma) {
+	  //prsf = plugins[i].regexsearchfilter; 
+          // approximate initially by using regexfiltergroup
+	  prfg = plugins[i].regexfiltergroup; 
+          if (prfg && pqma[prfg]) { 
+	    filterstr = pqma[prfg];
+	  }
 	}
-	// 2008-11-19 mouser: search should only STOP on the EXACT match
+      } else { // 2) non-regex plugin
+	if (mpa && rest) { // XXX
+          filterstr = rest;
+	}
+      }
+      if (filterstr) { // 3) filter
+	forceResultFilter(filterstr); 
+      }
+      // 4) search
+      plugins[i].search(querykey, mpa, queryraw, querynokeyword, 
+                        modifier, triggermethod);
+      if (mpa) { // 5) stop
         stopSearch();
         break;
       }
