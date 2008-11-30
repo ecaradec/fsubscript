@@ -133,10 +133,20 @@ function onInit(directory) {
     for (; !fldc.atEnd(); fldc.moveNext()) {
       try {
         var currentDirectory = fldc.item(); // used for eval(), full path
-        fln = currentDirectory + "\\fsubscript.js";
-        if (fso.FileExists(fln)) {
-          eval(getTextFile(fln));
+//----------------------------CZB---------------------------------
+//        fln = currentDirectory + "\\fsubscript.js";
+//        if (fso.FileExists(fln)) {
+//          eval(getTextFile(fln));
+//        }
+        var fldf = new Enumerator(currentDirectory.Files);
+        for (; !fldf.atEnd(); fldf.moveNext()) {
+          var rgxp = new RegExp("^fsubscript.*\\.js");
+          if(fldf.item().Name.search(rgxp) != -1){
+            fln = currentDirectory + "\\" + fldf.item().Name;
+            eval(getTextFile(fln));
+          }
         }
+//----------------------------CZB---------------------------------
       } catch (e) {
         error("error occured while loading " + 
               currentDirectory + "\\fsubscript.js\n" + 
@@ -148,6 +158,18 @@ function onInit(directory) {
     }    
   }
   processFolder(directory + "\\..", 0);
+//----------------------------CZB---------------------------------
+  for (var i in plugins) {
+    try{
+      pi = plugins[i];
+      if (!pi.onInit) { continue; }
+      pi.onInit();
+    } catch(e) {
+      error("plugin " + i + " has failed on onInit : " +
+            "message: " + e.message + " " + "name: " + e.name);
+    }
+  }
+//----------------------------CZB---------------------------------
 }
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, 
                        modifier, triggermethod) {
@@ -311,6 +333,21 @@ function onDoAdvConfig() {
 function onDoShowReadMe() {
 }
 function onSetStrValue(name, value) {
+//----------------------------CZB---------------------------------
+  var pi;
+  var rtrn = false;
+  for (var i in plugins) {
+    try{
+      pi = plugins[i];
+      if (!pi.onSetStrValue) { continue; }
+      if( pi.onSetStrValue(name,value) ) rtrn = true;
+    } catch(e) {
+      error("plugin " + i + " has failed on onSetStrValue : " +
+            "message: " + e.message + " " + "name: " + e.name);
+    }
+  }
+  return rtrn;
+//----------------------------CZB---------------------------------
 }
 function onGetStrValue(name) {
 }
