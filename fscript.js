@@ -30,7 +30,6 @@ HANDLED=1; CLOSE=2;
 //      how about wrapping these up in an object?  also, automating 
 //      their creation a bit?
 
-function setUserVar(sectionName,variableName,value){FARR.setStrValue("uservar."+sectionName+"."+variableName, value); }
 function getUserVar(sectionName,variableName){return FARR.getStrValue("uservar."+sectionName+"."+variableName); }
 
 function setStatusBar(txt) { FARR.setStrValue("statusbar", txt); }
