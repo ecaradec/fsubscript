@@ -331,10 +331,10 @@ function onSetStrValue(name, value) {
   for (var i in plugins) {
     try{
       pi = plugins[i];
-      if (!pi.onSetStrValue) { continue; }
-      if( pi.onSetStrValue(name,value) ) rtrn = true;
+      if (!pi.setStrValue) { continue; }
+      if( pi.setStrValue(name,value) ) rtrn = true;
     } catch(e) {
-      error("plugin " + i + " has failed on onSetStrValue : " +
+      error("plugin " + i + " has failed on setStrValue : " +
             "message: " + e.message + " " + "name: " + e.name);
     }
   }
