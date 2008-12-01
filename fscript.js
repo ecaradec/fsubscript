@@ -162,18 +162,6 @@ function onInit(directory) {
     }    
   }
   processFolder(directory + "\\..", 0);
-//----------------------------CZB---------------------------------
-  for (var i in plugins) {
-    try{
-      pi = plugins[i];
-      if (!pi.onInit) { continue; }
-      pi.onInit();
-    } catch(e) {
-      error("plugin " + i + " has failed on onInit : " +
-            "message: " + e.message + " " + "name: " + e.name);
-    }
-  }
-//----------------------------CZB---------------------------------
 }
 function onSearchBegin(querykey, explicit, queryraw, querynokeyword, 
                        modifier, triggermethod) {
