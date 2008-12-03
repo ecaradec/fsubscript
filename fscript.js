@@ -345,7 +345,7 @@ function onSetStrValue(name, value) {
   for (var i in plugins) {
     try{
       pi = plugins[i];
-      if (!pi.setStrValue) { continue; }
+      if (!pi || !pi.setStrValue) { continue; }
       if( pi.setStrValue(name,value) ) rtrn = true;
     } catch(e) {
       error("plugin " + i + " has failed on setStrValue : " +
