@@ -185,10 +185,21 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
     if (first === "aplugins") {
       for (var i in plugins) {
 	var pi = plugins[i];
-        var title = (pi.displayName || i) + 
-	            " (" + pi.version + " - " + pi.lastChange + ")";
-        FARR.emitResult(querykey, title, pi.aliasstr, pi.icon || iconfilename, 
-			ALIAS, MATCH_AGAINST_SEARCH, 99, pi.aliasstr);
+        var fcs = ["init","search","trigger","receive","showSettings",
+                   "settingsChanged","setStrValue","getStrValue"];
+        var active = false;
+        for(var k in fcs){
+          if(pi[fcs[k]]) {
+            active = true;
+            break;
+          }
+        }
+        if(active){
+          var title = (pi.displayName || i) + 
+	              " (" + pi.version + " - " + pi.lastChange + ")";
+          FARR.emitResult(querykey, title, pi.aliasstr, pi.icon || iconfilename, 
+	    	          ALIAS, MATCH_AGAINST_SEARCH, 99, pi.aliasstr);
+        }
       }
       cleanup(); return;
     }
