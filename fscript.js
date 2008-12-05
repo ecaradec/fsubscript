@@ -121,9 +121,10 @@ function error(txt) {
 var plugins = {}
   var fso = new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
-  var f = fso.OpenTextFile(path);
-  var txt = f.ReadAll();
-  f.Close();
+  var objFile = fso.GetFile(path);
+  var objTS = objFile.OpenAsTextStream(1, 0);
+  var txt = objTS.Read(objFile.Size);
+  objTS.Close();
   return txt;
 }
 var g_currentDirectory;
