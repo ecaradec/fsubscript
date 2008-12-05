@@ -30,6 +30,19 @@ HANDLED=1; CLOSE=2;
 //      how about wrapping these up in an object?  also, automating 
 //      their creation a bit?
 
+String.prototype.trim = function() {
+	return this.replace(/^\s+|\s+$/g,"");
+}
+
+String.prototype.supplant = function (o) {
+  return this.replace(/{([^{}]*)}/g,
+    function (a, b) {
+      var r = o[b];
+      return typeof r === 'string' || typeof r === 'number' ? r : a;
+    }
+  );
+};
+
 function setUserVar(sectionName,variableName,value){FARR.setStrValue("uservar."+sectionName+"."+variableName, value); }
 function getUserVar(sectionName,variableName){return FARR.getStrValue("uservar."+sectionName+"."+variableName); }
 
@@ -121,9 +134,10 @@ function error(txt) {
 var plugins = {}
   var fso = new ActiveXObject("Scripting.FileSystemObject");
 function getTextFile(path) {
-  var f = fso.OpenTextFile(path);
-  var txt = f.ReadAll();
-  f.Close();
+  var objFile = fso.GetFile(path);
+  var objTS = objFile.OpenAsTextStream(1, 0);
+  var txt = objTS.Read(objFile.Size);
+  objTS.Close();
   return txt;
 }
 var g_currentDirectory;
@@ -137,20 +151,10 @@ function onInit(directory) {
     for (; !fldc.atEnd(); fldc.moveNext()) {
       try {
         var currentDirectory = fldc.item(); // used for eval(), full path
-//----------------------------CZB---------------------------------
-//        fln = currentDirectory + "\\fsubscript.js";
-//        if (fso.FileExists(fln)) {
-//          eval(getTextFile(fln));
-//        }
-        var fldf = new Enumerator(currentDirectory.Files);
-        for (; !fldf.atEnd(); fldf.moveNext()) {
-          var rgxp = new RegExp("^fsubscript.*\\.js");
-          if(fldf.item().Name.search(rgxp) != -1){
-            fln = currentDirectory + "\\" + fldf.item().Name;
-            eval(getTextFile(fln));
-          }
+        fln = currentDirectory + "\\fsubscript.js";
+        if (fso.FileExists(fln)) {
+          eval(getTextFile(fln));
         }
-//----------------------------CZB---------------------------------
       } catch (e) {
         error("error occured while loading " + 
               currentDirectory + "\\fsubscript.js\n" + 
@@ -195,10 +199,21 @@ function onSearchBegin(querykey, explicit, queryraw, querynokeyword,
     if (first === "aplugins") {
       for (var i in plugins) {
 	var pi = plugins[i];
-        var title = (pi.displayName || i) + 
-	            " (" + pi.version + " - " + pi.lastChange + ")";
-        FARR.emitResult(querykey, title, pi.aliasstr, pi.icon || iconfilename, 
-			ALIAS, MATCH_AGAINST_SEARCH, 99, pi.aliasstr);
+        var fcs = ["init","search","trigger","receive","showSettings",
+                   "settingsChanged","setStrValue","getStrValue"];
+        var active = false;
+        for(var k in fcs){
+          if(pi[fcs[k]]) {
+            active = true;
+            break;
+          }
+        }
+        if(active){
+          var title = (pi.displayName || i) + 
+	              " (" + pi.version + " - " + pi.lastChange + ")";
+          FARR.emitResult(querykey, title, pi.aliasstr, pi.icon || iconfilename, 
+	    	          ALIAS, MATCH_AGAINST_SEARCH, 99, pi.aliasstr);
+        }
       }
       cleanup(); return;
     }
