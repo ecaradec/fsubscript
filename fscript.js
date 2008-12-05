@@ -137,20 +137,10 @@ function onInit(directory) {
     for (; !fldc.atEnd(); fldc.moveNext()) {
       try {
         var currentDirectory = fldc.item(); // used for eval(), full path
-//----------------------------CZB---------------------------------
-//        fln = currentDirectory + "\\fsubscript.js";
-//        if (fso.FileExists(fln)) {
-//          eval(getTextFile(fln));
-//        }
-        var fldf = new Enumerator(currentDirectory.Files);
-        for (; !fldf.atEnd(); fldf.moveNext()) {
-          var rgxp = new RegExp("^fsubscript.*\\.js");
-          if(fldf.item().Name.search(rgxp) != -1){
-            fln = currentDirectory + "\\" + fldf.item().Name;
-            eval(getTextFile(fln));
-          }
+        fln = currentDirectory + "\\fsubscript.js";
+        if (fso.FileExists(fln)) {
+          eval(getTextFile(fln));
         }
-//----------------------------CZB---------------------------------
       } catch (e) {
         error("error occured while loading " + 
               currentDirectory + "\\fsubscript.js\n" + 
