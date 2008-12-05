@@ -30,6 +30,19 @@ HANDLED=1; CLOSE=2;
 //      how about wrapping these up in an object?  also, automating 
 //      their creation a bit?
 
+String.prototype.trim = function() {
+	return this.replace(/^\s+|\s+$/g,"");
+}
+
+String.prototype.supplant = function (o) {
+  return this.replace(/{([^{}]*)}/g,
+    function (a, b) {
+      var r = o[b];
+      return typeof r === 'string' || typeof r === 'number' ? r : a;
+    }
+  );
+};
+
 function setUserVar(sectionName,variableName,value){FARR.setStrValue("uservar."+sectionName+"."+variableName, value); }
 function getUserVar(sectionName,variableName){return FARR.getStrValue("uservar."+sectionName+"."+variableName); }
 
